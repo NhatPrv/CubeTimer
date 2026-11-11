@@ -1,7 +1,6 @@
-import { Box, ChevronDown, History, Timer, TriangleAlert } from 'lucide-react'
+import { Box, ChevronDown, History, TriangleAlert } from 'lucide-react'
 import { useCallback } from 'react'
 import { useStore } from 'zustand'
-import { formatElapsed } from './timer/format-elapsed'
 import { TimerPanel } from './timer/TimerPanel'
 import { createTimerStore } from './timer/timer-store'
 import { isPuzzleId, puzzles, type PuzzleId } from './training/puzzles'
@@ -9,11 +8,11 @@ import type { Session } from './training/records'
 import { trainingRepository } from './training/repository'
 import { SessionControls } from './training/SessionControls'
 import { useSessionSelection } from './training/session-selection'
+import { SolveHistory } from './training/SolveHistory'
+import { getSingle } from './training/solve-statistics'
 import { useTrainingQuery } from './training/use-training-query'
 
 const timer = createTimerStore(trainingRepository.recordSolve)
-const recentLimit = 6
-const finishedTime = new Intl.DateTimeFormat('vi-VN', { dateStyle: 'short', timeStyle: 'short' })
 
 function QueryError({ retry }: { retry: () => void }) {
   return (
@@ -24,45 +23,30 @@ function QueryError({ retry }: { retry: () => void }) {
   )
 }
 
-function TrainingBoard({ session, canStart }: { session: Session; canStart: boolean }) {
+function TrainingBoard({ session, canStart, locked }: { session: Session; canStart: boolean; locked: boolean }) {
   const { puzzleId, id: sessionId } = session
-  const load = useCallback(() => trainingRepository.listRecentSolves({ puzzleId, sessionId }, recentLimit), [puzzleId, sessionId])
+  const load = useCallback(() => trainingRepository.listSolves({ puzzleId, sessionId }), [puzzleId, sessionId])
   const { result, retry } = useTrainingQuery(load)
   const lastSaved = useStore(timer, (state) => state.lastSaved)
-  const latest = result.status === 'ready' ? result.data[0] : undefined
+  const latest = result.status === 'ready' ? result.data.at(-1) : undefined
   const savedHere = lastSaved?.sessionId === sessionId && lastSaved.puzzleId === puzzleId
-  const latestMs = savedHere && (!latest || lastSaved.finishedAtMs > latest.finishedAtMs)
-    ? lastSaved.elapsedMs
-    : latest?.elapsedMs ?? 0
+  const lastResult = savedHere && (!latest || lastSaved.finishedAtMs > latest.finishedAtMs)
+    ? lastSaved
+    : latest
 
   return (
     <div className="training-board">
-      <TimerPanel timer={timer} latestMs={latestMs} context={canStart ? { puzzleId, sessionId, scramble: null } : null} />
+      <TimerPanel timer={timer} latestTime={lastResult ? getSingle(lastResult) : 0}
+        context={canStart ? { puzzleId, sessionId, scramble: null } : null} />
 
       <aside className="history-panel" aria-labelledby="history-title">
         <div className="flex items-center gap-2.5">
           <History size={18} className="text-muted" aria-hidden="true" />
-          <h2 id="history-title" className="font-semibold">Lượt giải gần đây</h2>
+          <h2 id="history-title" className="font-semibold">Lịch sử lượt giải</h2>
         </div>
         {result.status === 'loading' && <p className="history-message" role="status">Đang đọc lịch sử…</p>}
         {result.status === 'error' && <div className="history-message"><QueryError retry={retry} /></div>}
-        {result.status === 'ready' && (result.data.length > 0 ? (
-          <ol className="mt-4 divide-y divide-line" aria-label="Lịch sử lượt giải">
-            {result.data.map((solve) => (
-              <li key={solve.id} className="flex flex-wrap items-baseline justify-between gap-x-3 gap-y-1 py-3">
-                <span className="font-mono text-base tabular-nums">{formatElapsed(solve.elapsedMs)}</span>
-                <time dateTime={new Date(solve.finishedAtMs).toISOString()} className="text-xs text-muted">
-                  {finishedTime.format(solve.finishedAtMs)}
-                </time>
-              </li>
-            ))}
-          </ol>
-        ) : (
-          <div className="history-empty">
-            <Timer size={23} aria-hidden="true" />
-            <p>Phiên này chưa có lượt giải.</p>
-          </div>
-        ))}
+        {result.status === 'ready' && <SolveHistory scope={{ puzzleId, sessionId }} solves={result.data} locked={locked} />}
       </aside>
     </div>
   )
@@ -82,7 +66,7 @@ function PuzzleTraining({ puzzleId }: { puzzleId: PuzzleId }) {
 
   return (
     <SessionControls puzzleId={puzzleId} sessions={result.data} selected={session} locked={locked}>
-      {(editing) => session ? <TrainingBoard key={session.id} session={session} canStart={!editing} /> : (
+      {(editing) => session ? <TrainingBoard key={session.id} session={session} canStart={!editing} locked={locked} /> : (
         <p className="my-8 text-sm text-muted" role="status">Đang mở phiên luyện tập…</p>
       )}
     </SessionControls>

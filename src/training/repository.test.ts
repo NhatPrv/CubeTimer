@@ -91,4 +91,18 @@ describe('training repository', () => {
     await expect(repository.recordSolve({ ...solve, elapsedMs: 999 })).rejects.toThrow('đã được dùng')
     expect(await repository.listSolves(solve)).toEqual([solve])
   })
+
+  it('edits a penalty only in its own scope and preserves the measured time', async () => {
+    const session = await repository.getOrCreateDefaultSession('333')
+    const solve = makeSolve(session, 'penalty-target')
+    await repository.recordSolve(solve)
+    await expect(repository.setSolvePenalty({ puzzleId: '444', sessionId: session.id }, solve.id, 'dnf'))
+      .rejects.toThrow('không thuộc')
+    await expect(repository.setSolvePenalty({ puzzleId: '333', sessionId: 'other' }, solve.id, 'dnf'))
+      .rejects.toThrow('không thuộc')
+    await repository.setSolvePenalty(solve, solve.id, 'plus2')
+    expect(await repository.listSolves(solve)).toEqual([{ ...solve, penalty: 'plus2' }])
+    await repository.setSolvePenalty(solve, solve.id, 'none')
+    expect(await repository.listSolves(solve)).toEqual([solve])
+  })
 })

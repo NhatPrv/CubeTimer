@@ -1,6 +1,7 @@
 import { Hand, Keyboard, RotateCcw } from 'lucide-react'
 import { useEffect, useRef, useState, type PointerEvent } from 'react'
 import { useStore } from 'zustand'
+import type { Single } from '../training/solve-statistics'
 import { formatElapsed } from './format-elapsed'
 import type { createTimerStore, TimerContext, TimerInput } from './timer-store'
 
@@ -16,7 +17,7 @@ const statusText = {
 type TimerPanelProps = {
   timer: ReturnType<typeof createTimerStore>
   context: TimerContext | null
-  latestMs: number
+  latestTime: Single
 }
 
 function keyboardInput(event: KeyboardEvent): TimerInput | null {
@@ -25,7 +26,7 @@ function keyboardInput(event: KeyboardEvent): TimerInput | null {
   return null
 }
 
-export function TimerPanel({ timer, context, latestMs }: TimerPanelProps) {
+export function TimerPanel({ timer, context, latestTime }: TimerPanelProps) {
   const phase = useStore(timer, (state) => state.phase)
   const surface = useRef<HTMLButtonElement>(null)
   const startedAtMs = phase.status === 'running' ? phase.startedAtMs : null
@@ -93,7 +94,7 @@ export function TimerPanel({ timer, context, latestMs }: TimerPanelProps) {
     timer.getState().cancelHold(`pointer:${event.pointerId}`)
   }
 
-  let elapsedMs = latestMs
+  let elapsedMs = latestTime
   if (phase.status === 'holding' || phase.status === 'armed') elapsedMs = 0
   if (phase.status === 'running') elapsedMs = frame?.start === phase.startedAtMs ? frame.elapsedMs : 0
   if (phase.status === 'saving' || phase.status === 'save-error') elapsedMs = phase.solve.elapsedMs
@@ -120,7 +121,7 @@ export function TimerPanel({ timer, context, latestMs }: TimerPanelProps) {
           <span className="status-dot" aria-hidden="true" />
           {statusText[phase.status]}
         </span>
-        <span className="timer-value" aria-live="off">{formatElapsed(elapsedMs)}</span>
+        <span className="timer-value" aria-live="off">{elapsedMs === 'DNF' ? elapsedMs : formatElapsed(elapsedMs)}</span>
         <span className="timer-instruction" id="timer-help">
           {phase.status === 'running' ? 'Nhấn Space hoặc chạm để dừng' : 'Giữ 0,3 giây, rồi nhả để bắt đầu'}
         </span>

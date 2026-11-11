@@ -137,9 +137,9 @@ select {
   margin-top: 1.25rem;
 }
 
-@media (min-width: 54rem) {
+@media (min-width: 62rem) {
   .training-board {
-    grid-template-columns: minmax(0, 1fr) minmax(17rem, 0.38fr);
+    grid-template-columns: minmax(0, 1.25fr) minmax(24rem, 1fr);
     gap: 1.25rem;
   }
 }
@@ -264,4 +264,106 @@ select {
 
 .history-message {
   margin-top: 1rem;
+}
+
+.solve-summary {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0.25rem 0.75rem;
+  margin-top: 1rem;
+  padding: 0.65rem 0.8rem;
+  border-radius: 0.65rem;
+  background: #f3f5ef;
+  color: var(--color-muted);
+  font-size: 0.8rem;
+}
+
+.solve-filters {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.6rem;
+  margin-top: 0.8rem;
+}
+
+.solve-filters select {
+  min-width: 0;
+  padding-inline: 0.55rem 1.75rem;
+  font-size: 0.8rem;
+}
+
+.solve-filters .select-wrap > svg {
+  right: 0.55rem;
+}
+
+.solve-table-wrap {
+  max-height: 24rem;
+  overflow: auto;
+  margin-top: 1rem;
+  border: 1px solid var(--color-line);
+  border-radius: 0.65rem;
+}
+
+.solve-table {
+  width: 100%;
+  min-width: 17rem;
+  text-align: right;
+  font-size: 0.75rem;
+}
+
+.solve-table th, .solve-table td {
+  padding: 0.45rem clamp(0.25rem, 1vw, 0.65rem);
+}
+
+.solve-table th:first-child, .solve-table td:first-child {
+  text-align: left;
+}
+
+.solve-table th {
+  position: sticky;
+  top: 0;
+  background: #f3f5ef;
+  color: var(--color-muted);
+  font-weight: 600;
+}
+
+.solve-table td {
+  border-top: 1px solid var(--color-line);
+}
+
+.solve-table time {
+  color: var(--color-muted);
+}
+
+.solve-value {
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.solve-penalty {
+  width: 3.65rem;
+  min-width: 0;
+  min-height: 2rem;
+  appearance: auto;
+  padding: 0 0.25rem;
+  font-size: 0.75rem;
+}
+
+.solve-pagination {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.65rem;
+  margin-top: 0.75rem;
+  color: var(--color-muted);
+  font-size: 0.8rem;
+}
+
+.solve-pagination .outline-button {
+  min-width: 2.3rem;
+  min-height: 2.3rem;
+  padding: 0.35rem;
 }
